@@ -43,6 +43,7 @@ func main() {
 
 	if arglen <= 1 {
 		fmt.Println("No option set try --help for more information")
+		os.Exit(-1)
 	}
 
 	if (hostedzonenameFlag != "") && (hostnameFlag != "") && (recordtypeFlag != "") {
@@ -56,26 +57,28 @@ func main() {
 		record.Record.Type = aws.String(recordtypeFlag)
 		record.Record.ResourceRecords[0] = &route53.ResourceRecord{Value: aws.String(ipaddressFlag)}
 		//get the hosted zone id from the name
-		record.getzoneid()
+		record.getZoneID()
 		//upsert record
-		record.recordupsert()
+		record.recordUpsert()
+	} else {
+		fmt.Println("Option missing or not set, try --help for more information")
+		os.Exit(-1)
 	}
 
 }
 
-func (record *Recordset) getzoneid() {
+func (record *Recordset) getZoneID() {
 	svc := route53.New(session.New())
-	fmt.Println("looking for the record: ", record.HostZoneName)
-
+	//intialise search params
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(record.HostZoneName),
-		MaxItems: aws.String("1"),
+		MaxItems: aws.String("1"), //limit records to 1
 	}
 
 	resp, err := svc.ListHostedZonesByName(params)
 	if err != nil {
 		fmt.Println(err.Error())
-		os.Exit(-1)
+		os.Exit(1)
 	}
 	//if result does not match error out
 	if record.HostZoneName+"." == *resp.HostedZones[0].Name {
@@ -89,7 +92,7 @@ func (record *Recordset) getzoneid() {
 }
 
 //update zone record
-func (record *Recordset) recordupsert() {
+func (record *Recordset) recordUpsert() {
 	svc := route53.New(session.New())
 
 	//initialise upsert params
@@ -115,7 +118,8 @@ func (record *Recordset) recordupsert() {
 	if err != nil {
 		// Print the error, cast err to awserr.Error to get the Code and
 		// Message from an error.
-		fmt.Println(err.Error())
+		fmt.Println("Error: Could not upsert record - ", err.Error())
+		os.Exit(-1)
 		return
 	}
 	// Pretty-print the response data.
