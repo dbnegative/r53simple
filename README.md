@@ -1,4 +1,4 @@
-# r53simple
+# r53simple [![CircleCI](https://circleci.com/gh/dbnegative/r53simple.svg?style=svg)](https://circleci.com/gh/dbnegative/r53simple)
 
 Simple utility to Upsert a Route53 record from an AWS ASG instance. Currently only A records supported.
 
